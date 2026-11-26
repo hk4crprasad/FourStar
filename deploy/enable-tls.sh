@@ -17,7 +17,13 @@ if [[ ! -s "$certificate" ]]; then
         echo "Waiting for DNS-only A record $domain -> $ip"
         exit 0
     fi
-    certbot certonly --webroot -w "$webroot" --cert-name "$domain" -d "$domain" \
+    account_args=()
+    parent_renewal="/etc/letsencrypt/renewal/${domain#*.}.conf"
+    if [[ -r "$parent_renewal" ]]; then
+        account=$(awk -F= '/^[[:space:]]*account[[:space:]]*=/{gsub(/[[:space:]]/,"",$2); print $2; exit}' "$parent_renewal")
+        if [[ -n "$account" ]]; then account_args=(--account "$account"); fi
+    fi
+    certbot certonly "${account_args[@]}" --webroot -w "$webroot" --cert-name "$domain" -d "$domain" \
         --keep-until-expiring --agree-tos --non-interactive --register-unsafely-without-email \
         --deploy-hook 'systemctl reload nginx'
 fi
