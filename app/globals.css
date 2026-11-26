@@ -35,7 +35,14 @@
 .danger { color: var(--phirmy-danger) !important; }
 .error-notice { padding: 0.75rem; color: var(--phirmy-danger); background: color-mix(in srgb, var(--phirmy-danger) 9%, transparent); border-radius: 0.625rem; }
 .error-notice svg { flex: none; }
-.loading-screen { min-height: 60dvh; display: flex; justify-content: center; align-items: center; gap: 0.75rem; }
+.loading-screen { min-height: 100dvh; display: flex; justify-content: center; align-items: center; color: var(--color-text-secondary); }
+.loading-content { text-align: center; }
+.loading-content svg:first-child { color: var(--phirmy-lime-text); }
+.dish-facts { margin-block: 0.5rem; color: var(--color-text-secondary); }
+.dish-facts summary { cursor: pointer; color: var(--phirmy-lime-text); }
+.payment-open .razorpay-backdrop { background: transparent !important; backdrop-filter: blur(0.45rem); }
+/* Match the hosted frame's light canvas so the browser preserves its transparency. */
+.payment-open .razorpay-checkout-frame { color-scheme: light; }
 .photo-fallback { width: 100%; height: 100%; background: var(--phirmy-card); color: var(--color-text-secondary); }
 
 .site-header { position: sticky; top: 0; z-index: 5; background: var(--color-background-body); border-bottom: 0.0625rem solid var(--phirmy-border); }
@@ -485,4 +492,29 @@
 @media (max-width: 42rem) {
   .hotel-inventory-list li { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 0.35rem; }
   .hotel-inventory-list li > :last-child { justify-self: end; }
+}
+
+.table-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: 0.9rem; }
+.table-tile { display: grid; gap: 0.45rem; text-align: left; min-height: 7rem; border-inline-start: 0.25rem solid var(--table-status, var(--phirmy-border-strong)); }
+.table-tile strong { font-size: 1.22rem; }
+.table-tile b { color: var(--table-status, var(--color-text-primary)); }
+.table-tile small { color: var(--color-text-secondary); }
+.table-tile:hover { background: var(--phirmy-card); }
+.table-available { --table-status: var(--phirmy-lime-text); }
+.table-new, .table-bill { --table-status: var(--phirmy-checkout); }
+.table-bill { outline: 1px solid var(--phirmy-checkout); }
+.table-preparing { --table-status: var(--color-text-warning); }
+.table-ready { --table-status: var(--color-text-info); }
+.table-served { --table-status: var(--color-text-purple); }
+.table-disabled { --table-status: var(--color-text-secondary); }
+.table-search { width: min(100%, 15rem); }
+.table-qr { width: min(100%, 13rem); border-radius: 0.5rem; }
+.table-guest { margin-block: 2rem; }
+.admin-extra-nav { color: var(--color-text-primary); font-size: 0.85rem; padding: 0.65rem; white-space: nowrap; }
+.manual-items { max-height: 17rem; overflow: auto; }
+@media print {
+  body:has(.table-receipt) * { visibility: hidden; }
+  body:has(.table-receipt) .table-receipt, body:has(.table-receipt) .table-receipt * { visibility: visible; color: black !important; }
+  body:has(.table-receipt) .popup { position: absolute; width: 100%; max-height: none; overflow: visible; }
+  .table-receipt { position: fixed; inset: 0 auto auto 0; width: 100%; background: white; }
 }

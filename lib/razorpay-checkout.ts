@@ -4,7 +4,7 @@ type Gateway = { verified: true } | { verified: false; keyId: string; orderId: s
 type Signature = { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string };
 type CheckoutOptions = {
   key: string; order_id: string; amount: number; currency: 'INR'; name: string; description: string;
-  theme: { color: string };
+  theme: { color: string; backdrop_color: string };
   prefill: { contact: string };
   hidden: { contact: boolean; email: boolean };
   handler: (response: Signature) => void;
@@ -45,16 +45,18 @@ export async function payWithRazorpay(id: string) {
   const color = getComputedStyle(theme).getPropertyValue('--color-accent').trim();
   return new Promise<boolean>((resolve, reject) => {
     let verifying = false;
+    const restore = () => document.body.classList.remove('payment-open');
     const checkout = new Razorpay({
       key: gateway.keyId, order_id: gateway.orderId, amount: gateway.amount, currency: 'INR', name: gateway.name,
-      description: 'Restaurant order · Test Mode', theme: { color },
+      description: 'Restaurant order · Test Mode', theme: { color, backdrop_color: '#00000000' },
       prefill: { contact: '+919000090000' }, hidden: { contact: true, email: true },
       handler: response => {
         verifying = true;
-        void jsonRequest<{ verified: true }>(endpoint, 'PATCH', response).then(() => resolve(true), reject);
+        void jsonRequest<{ verified: true }>(endpoint, 'PATCH', response).then(() => { restore(); resolve(true); }, error => { restore(); reject(error); });
       },
-      modal: { ondismiss: () => { if (!verifying) resolve(false); } },
+      modal: { ondismiss: () => { restore(); if (!verifying) resolve(false); } },
     });
-    checkout.open();
+    document.body.classList.add('payment-open');
+    try { checkout.open(); } catch (error) { restore(); reject(error); }
   });
 }

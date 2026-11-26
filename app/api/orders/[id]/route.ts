@@ -7,7 +7,7 @@ export function GET(_request: Request, { params }: { params: Promise<{ id: strin
     const { id } = await params;
     if (!isOrderId(id)) throw new ApiError(404, 'Order not found. Check your order ID.');
     const order = await db.order.findFirst({
-      where: { id, restaurantId },
+      where: { id, restaurantId, diningSessionId: null },
       select: { id: true, status: true, type: true, events: true, total: true, createdAt: true, paymentVerified: true },
     });
     if (!order) throw new ApiError(404, 'Order not found. Check your order ID.');

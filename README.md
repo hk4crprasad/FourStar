@@ -39,6 +39,17 @@ Booking prices are calculated server-side from the saved nightly rate and the ch
 
 Room and room-service payments are demos. The app does not charge a card, post a balance to a real hotel folio, or send notifications.
 
+## Smart Table
+
+1. Open [Table management](http://localhost:3000/admin/tables) as staff. Select a seeded table, T1–T6, or create one. Download its PNG or SVG, print one card, or choose **Print A4 cards** to print the full set. Set `APP_ORIGIN` before printing for a public deployment.
+2. Open a visit and give the displayed visit code to the diners. Scan the card or use **Open scan link**, enter the code, and order without an account. A printed QR stays the same between visits. Regenerate it if it has been shared inappropriately.
+3. In the [kitchen display](http://localhost:3000/admin/kitchen), accept, prepare, mark ready, and serve each order. The guest’s orders page updates automatically and can request a waiter, water, or the bill.
+4. From the table drawer, acknowledge requests, issue a consolidated bill with any approved discount, print a receipt, record demo cash or external UPI, and close the visit. The next visit starts with fresh access and an empty order history.
+
+Visits expire for guests after four hours. Staff can still finish and settle an expired visit. QR codes identify tables. Staff give out per-visit codes in person and accept orders before preparation. A shared QR and current visit code together can be used remotely.
+
+Set `TABLE_DEMO_SESSIONS=1` before the first seed of a private demo to open sample visits. Shared deployments normally start all six tables available. Staff can add verified ingredient and allergen information in the menu editor. Hindi and Odia menu copy can be added when verified translations are available.
+
 ## Demo checkout
 
 Choose delivery, takeaway, or dine-in. Delivery asks for an address and dine-in asks for a table number. The server validates availability and customisations and calculates tax and delivery from restaurant settings. Save the confirmation ID to track the order. Staff can accept or reject it and advance it through the kitchen. Delivery orders have an additional Out for delivery step. Daily sales reports count completed orders in the restaurant’s time zone.
@@ -58,7 +69,7 @@ npm run build
 npm start
 ```
 
-The browser test uses a seeded demo database and creates demo orders. Install Python Playwright and Chromium with `python -m pip install playwright` and `python -m playwright install chromium`, then run `python tests/e2e.py` and `python tests/hotel_e2e.py` against the running server. Use a seeded demo database with the Standard room available for tonight when running the hotel suite. Override `PHIRMY_BASE_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, and `PHIRMY_SCREENSHOTS` as needed.
+The browser tests use a seeded demo database and create demo orders. Install Python Playwright and Chromium with `python -m pip install playwright` and `python -m playwright install chromium`, then run `python tests/e2e.py`, `python tests/hotel_e2e.py`, and `python tests/table_e2e.py` against the running server. Use a seeded demo database with the Standard room available for tonight when running the hotel suite. Override `PHIRMY_BASE_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, and `PHIRMY_SCREENSHOTS` as needed.
 
 The key visuals were generated with ImageGen for this demo. The hero depicts butter chicken on a charcoal tabletop with the food on the right and clear space for the overlaid headline. The menu photos depict individual seeded dishes in the same dark tabletop style. The exported WebP images are in `public/food`.
 

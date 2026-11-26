@@ -16,6 +16,8 @@ export const imageUrl = z.string().trim().max(1500).refine(value => {
 export const categoryInput = z.object({ name: name('a category name', 45), imageUrl: imageUrl.nullable(), position }).strict();
 export const menuItemInput = z.object({
   categoryId: id, name: name('a dish name'), description, imageUrl, price: paise.min(100),
+  ingredients: z.string().trim().max(600).nullable().optional(),
+  allergens: z.string().trim().max(600).nullable().optional(),
   vegetarian: z.boolean(), inStock: z.boolean(), popular: z.boolean(), recommended: z.boolean(),
   position, options: z.array(z.object({ label: name('an option label', 45), price: paise }).strict()).max(15)
     .refine(options => new Set(options.map(option => option.label.toLowerCase())).size === options.length, 'Use a different label for each option.'),

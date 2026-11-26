@@ -69,6 +69,7 @@ function Editor({ resource, menu, record, close, saved }: {
     let data: unknown = common;
     if (resource === 'items') data = {
       ...common, categoryId: text('categoryId'), description: text('description'), price: money('price'),
+      ingredients: text('ingredients') || null, allergens: text('allergens') || null,
       vegetarian: checked('vegetarian'), inStock: checked('inStock'), popular: checked('popular'), recommended: checked('recommended'), options,
     };
     if (resource === 'restaurant') data = {
@@ -102,6 +103,8 @@ function Editor({ resource, menu, record, close, saved }: {
       {resource !== 'restaurant' && <label>Display position<input name="position" type="number" min="0" max="9999" defaultValue={record?.position ?? (resource === 'items' ? menu.items.length : menu.categories.length)} required /></label>}
       <ImageField label={resource === 'restaurant' ? 'Logo image' : 'Image'} initial={resource === 'restaurant' ? restaurant.logoUrl : record?.imageUrl} required={resource === 'items'} onUpload={setUploading} />
       {resource === 'items' && <>
+        <label>Verified ingredients (optional)<textarea name="ingredients" defaultValue={dish?.ingredients ?? ''} maxLength={600} /></label>
+        <label>Verified allergens (optional)<textarea name="allergens" defaultValue={dish?.allergens ?? ''} maxLength={600} /></label>
         <HStack className="catalog-checks">
           <label className="check-row"><input type="checkbox" name="vegetarian" defaultChecked={dish?.vegetarian} /> Vegetarian</label>
           <label className="check-row"><input type="checkbox" name="inStock" defaultChecked={dish?.inStock ?? true} /> In stock</label>

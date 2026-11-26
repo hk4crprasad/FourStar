@@ -17,6 +17,7 @@ export const statusLabels: Record<OrderStatus, string> = {
 export type Option = { label: string; price: number };
 export type MenuItem = {
   id: string; categoryId: string; name: string; description: string; imageUrl: string;
+  ingredients?: string | null; allergens?: string | null;
   price: number; vegetarian: boolean; inStock: boolean; popular: boolean; recommended: boolean;
   options: Option[]; position: number;
 };

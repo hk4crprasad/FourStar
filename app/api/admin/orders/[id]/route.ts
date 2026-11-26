@@ -14,9 +14,10 @@ export function PATCH(request: Request, { params }: { params: Promise<{ id: stri
     const order = await db.order.findFirst({ where: { id, restaurantId, paymentVerified: true } });
     if (!order) throw new ApiError(404, 'Order not found.');
     if (order.status === status) return { ok: true };
-    if (!nextStatuses(order.type, order.status).includes(status)) throw new ApiError(409, 'This order has changed. Refresh its status and try again.');
+    const canCancel = Boolean(order.diningSessionId) && status === 'REJECTED' && ['ACCEPTED', 'PREPARING'].includes(order.status);
+    if (!canCancel && !nextStatuses(order.type, order.status).includes(status)) throw new ApiError(409, 'This order has changed. Refresh its status and try again.');
     const events = [...order.events as Event[], { status, at: new Date().toISOString() }];
-    const updated = await db.order.updateMany({ where: { id, status: order.status }, data: { status, events } });
+    const updated = await db.order.updateMany({ where: { id, status: order.status, updatedAt: order.updatedAt }, data: { status, events } });
     if (!updated.count) throw new ApiError(409, 'Another staff member just updated this order.');
     return { ok: true };
   });

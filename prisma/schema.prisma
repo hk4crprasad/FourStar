@@ -47,6 +47,8 @@ model Restaurant {
   categories   Category[]
   items        MenuItem[]
   orders       Order[]
+  tables       RestaurantTable[]
+  diningSessions DiningSession[]
   hotel        Hotel?
 }
 
@@ -70,6 +72,8 @@ model MenuItem {
   category     Category   @relation(fields: [categoryId], references: [id])
   name         String
   description  String
+  ingredients  String?
+  allergens    String?
   imageUrl     String
   price        Int
   vegetarian   Boolean
@@ -115,12 +119,15 @@ model Order {
   reservationId String?
   reservation  Reservation? @relation(fields: [reservationId], references: [id])
   roomNumber   String?
+  diningSessionId String?
+  diningSession DiningSession? @relation(fields: [diningSessionId], references: [id])
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
   @@index([restaurantId, status, createdAt])
   @@index([restaurantId, createdAt])
   @@index([reservationId])
+  @@index([diningSessionId])
 }
 
 model OrderItem {
@@ -290,4 +297,97 @@ model ReservationNight {
 
   @@id([roomId, night])
   @@index([reservationId])
+}
+
+enum ServiceRequestType {
+  WAITER
+  WATER
+  BILL
+}
+
+enum ServiceRequestStatus {
+  PENDING
+  ACKNOWLEDGED
+  RESOLVED
+}
+
+enum DiningPaymentMethod {
+  CASH
+  UPI
+}
+
+model RestaurantTable {
+  id           String @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  number       String
+  name         String
+  capacity     Int
+  enabled      Boolean @default(true)
+  qrTokens     TableQrToken[]
+  sessions     DiningSession[]
+
+  @@unique([restaurantId, number])
+}
+
+model TableQrToken {
+  id        String @id @default(cuid())
+  tableId   String
+  table     RestaurantTable @relation(fields: [tableId], references: [id])
+  tokenHash String @unique
+  createdAt DateTime @default(now())
+  revokedAt DateTime?
+
+  @@index([tableId, revokedAt])
+}
+
+model DiningSession {
+  id           String @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  tableId      String
+  table        RestaurantTable @relation(fields: [tableId], references: [id])
+  openedAt     DateTime @default(now())
+  expiresAt    DateTime
+  closedAt     DateTime?
+  orders       Order[]
+  requests     ServiceRequest[]
+  bill         DiningBill?
+
+  @@index([restaurantId, tableId, closedAt])
+}
+
+model ServiceRequest {
+  id        String @id @default(cuid())
+  sessionId String
+  session   DiningSession @relation(fields: [sessionId], references: [id])
+  type      ServiceRequestType
+  status    ServiceRequestStatus @default(PENDING)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sessionId, status])
+}
+
+model DiningBill {
+  id        String @id @default(cuid())
+  sessionId String @unique
+  session   DiningSession @relation(fields: [sessionId], references: [id])
+  subtotal  Int
+  tax       Int
+  discount  Int @default(0)
+  total     Int
+  createdAt DateTime @default(now())
+  payments  PaymentRecord[]
+}
+
+model PaymentRecord {
+  id        String @id @default(cuid())
+  billId    String
+  bill      DiningBill @relation(fields: [billId], references: [id])
+  method    DiningPaymentMethod
+  amount    Int
+  createdAt DateTime @default(now())
+
+  @@index([billId])
 }

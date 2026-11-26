@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { seedHotel } from './hotel-seed';
 import { db, restaurantId } from '../lib/db';
 import type { Option } from '../lib/domain';
+import { issueToken, sessionHours } from '../lib/table';
 
 const categories = [
   ['starters', 'Starters', 'paneer-tikka'],
@@ -71,7 +72,21 @@ async function seed() {
     });
   }));
   await seedHotel();
-  console.log('Seeded FourStar, 24 dishes and four room types.');
+  for (let number = 1; number <= 6; number++) {
+    const tableNumber = `T${number}`;
+    const table = await db.restaurantTable.upsert({
+      where: { restaurantId_number: { restaurantId, number: tableNumber } },
+      update: {},
+      create: { restaurantId, number: tableNumber, name: `Table ${tableNumber}`, capacity: 4 },
+    });
+    await db.$transaction(async tx => {
+      if (!await tx.tableQrToken.count({ where: { tableId: table.id } })) await issueToken(tx, table.id);
+      if (process.env.TABLE_DEMO_SESSIONS === '1' && table.enabled && !await tx.diningSession.count({ where: { tableId: table.id } })) {
+        await tx.diningSession.create({ data: { restaurantId, tableId: table.id, expiresAt: new Date(Date.now() + sessionHours * 3_600_000) } });
+      }
+    });
+  }
+  console.log('Seeded FourStar, 24 dishes, four room types and six dining tables.');
 }
 
 seed().catch(error => { console.error(error); process.exitCode = 1; }).finally(() => db.$disconnect());

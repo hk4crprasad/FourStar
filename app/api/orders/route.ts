@@ -16,7 +16,7 @@ export function POST(request: Request) {
     if (service && !reservationId) throw new ApiError(403, 'Verify an active check-in before ordering room service.');
     const online = input.payment === 'RAZORPAY_TEST';
     if (online && !razorpayKeys()) throw new ApiError(503, 'Razorpay Test Mode is unavailable. Choose another demo payment method.');
-    const findExisting = () => db.order.findUnique({ where: { requestId: input.requestId }, select: { id: true } });
+    const findExisting = () => db.order.findUnique({ where: { requestId: input.requestId, diningSessionId: null }, select: { id: true } });
     const existing = await findExisting();
     if (existing) return existing;
 
@@ -29,6 +29,10 @@ export function POST(request: Request) {
         if (!mobile || !customerName) throw new ApiError(400, 'Enter your name and mobile number.');
         const restaurant = await tx.restaurant.findUniqueOrThrow({ where: { id: restaurantId } });
         if (!acceptingOrders(restaurant)) throw new ApiError(409, 'The kitchen is closed. Please check the restaurant hours.');
+        if (input.type === 'DINE_IN' && input.tableNumber && await tx.restaurantTable.findUnique({
+          where: { restaurantId_number: { restaurantId, number: input.tableNumber.toUpperCase() } },
+          select: { id: true },
+        })) throw new ApiError(400, 'Scan your table’s QR code or ask staff to place the order.');
         const items = await tx.menuItem.findMany({
           where: { restaurantId, id: { in: input.items.map(line => line.menuItemId) } },
         });

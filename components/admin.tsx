@@ -235,6 +235,8 @@ export function Admin({ initialMenu }: { initialMenu: Menu | null }) {
       <aside className="admin-nav">
         <p className="eyebrow">HOSPITALITY MANAGEMENT</p>
         <nav aria-label="Admin navigation">
+          <Link className="admin-extra-nav" href="/admin/tables">Table management</Link>
+          <Link className="admin-extra-nav" href="/admin/kitchen">Kitchen display</Link>
           {tabs.map(([key, label, Icon]) => <button key={key} className={tab === key ? 'current' : ''} aria-current={tab === key ? 'page' : undefined}
             onClick={() => setTab(key)}><Icon size={18} />{label}{key === 'orders' && Boolean(overview?.live.length) && <small>{overview?.live.length}</small>}{key === 'reservations' && Boolean(hotel?.pending) && <small>{hotel?.pending}</small>}</button>)}
         </nav>
