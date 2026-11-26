@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
 import '@astryxdesign/core/reset.css';
 import '@astryxdesign/core/astryx.css';
 import '@fontsource-variable/manrope';
@@ -11,5 +12,12 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body><AppTheme>{children}</AppTheme></body></html>;
+  return (
+    <html lang="en">
+      <body>
+        <AppTheme>{children}</AppTheme>
+        <Script src="https://app.phirmy.com/widget.js" strategy="afterInteractive" data-widget-id="cyne-IT_TA8wPvayTTNBzELlhwryy" data-public-key="cyne_pk_pAUJO5kxVxQxdtvMqhkf4wqxZxWs2POT" />
+      </body>
+    </html>
+  );
 }

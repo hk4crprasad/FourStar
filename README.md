@@ -60,7 +60,7 @@ Optional Razorpay integration uses `RAZORPAY_TEST_KEY_ID` and `RAZORPAY_TEST_KEY
 
 Staff can manage menu items, availability, categories, pricing, images, hours and storefront branding. Uploaded images are re-encoded and stored under `.data/media` by default. Set `MEDIA_DIRECTORY` to a persistent writable volume for a hosted instance. Persist or back up that volume alongside PostgreSQL.
 
-The Phirmy chat, voice and telephony adapter contracts are in `lib/phirmy.ts`. No AI or telephone provider is connected.
+The Phirmy assistant widget loads from `app.phirmy.com` on every page through `app/layout.tsx`. Its widget ID and public key are public embed values. The widget's allowed domains are managed in the Phirmy dashboard, so add each new hostname there. The chat, voice and telephony adapter contracts are in `lib/phirmy.ts`. No telephone provider is connected from this codebase.
 
 ```sh
 npm test
