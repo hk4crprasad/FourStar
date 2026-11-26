@@ -5,6 +5,8 @@ type Signature = { razorpay_order_id: string; razorpay_payment_id: string; razor
 type CheckoutOptions = {
   key: string; order_id: string; amount: number; currency: 'INR'; name: string; description: string;
   theme: { color: string };
+  prefill: { contact: string };
+  hidden: { contact: boolean; email: boolean };
   handler: (response: Signature) => void;
   modal: { ondismiss: () => void };
 };
@@ -39,11 +41,14 @@ export async function payWithRazorpay(id: string) {
   if (gateway.verified) return true;
 
   const Razorpay = await checkoutScript();
+  const theme = document.querySelector('.app-theme') ?? document.body;
+  const color = getComputedStyle(theme).getPropertyValue('--color-accent').trim();
   return new Promise<boolean>((resolve, reject) => {
     let verifying = false;
     const checkout = new Razorpay({
       key: gateway.keyId, order_id: gateway.orderId, amount: gateway.amount, currency: 'INR', name: gateway.name,
-      description: 'Restaurant order · Test Mode', theme: { color: '#84cc16' },
+      description: 'Restaurant order · Test Mode', theme: { color },
+      prefill: { contact: '+919000090000' }, hidden: { contact: true, email: true },
       handler: response => {
         verifying = true;
         void jsonRequest<{ verified: true }>(endpoint, 'PATCH', response).then(() => resolve(true), reject);

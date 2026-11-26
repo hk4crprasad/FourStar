@@ -6,8 +6,8 @@ import './globals.css';
 import { AppTheme } from '@/components/theme';
 
 export const metadata: Metadata = {
-  title: { default: 'Tamarind Social | Indian Kitchen', template: '%s | Tamarind Social' },
-  description: 'Order tandoor favourites, slow-cooked curries and more from Tamarind Social.',
+  title: { default: 'FourStar | Hotel & Indian Kitchen', template: '%s | FourStar' },
+  description: 'Book a stay in Kataka and order from FourStar’s Indian kitchen.',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

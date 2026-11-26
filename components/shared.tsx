@@ -9,12 +9,12 @@ import Link from 'next/link';
 import type { Restaurant } from '@/lib/domain';
 
 export function Brand({ restaurant, href = '/' }: { restaurant?: Pick<Restaurant, 'name' | 'logoUrl' | 'tagline'>; href?: string }) {
-  return <Link href={href} className="brand" aria-label={restaurant?.name ?? 'Tamarind Social'}>
+  return <Link href={href} className="brand" aria-label={restaurant?.name ?? 'FourStar'}>
     <HStack className="brand-mark" hAlign="center" vAlign="center">
       {restaurant?.logoUrl ? <Photo src={restaurant.logoUrl} alt="" /> : <FlameKindling size={24} strokeWidth={2.1} />}
     </HStack>
     <VStack className="brand-type">
-      <strong>{restaurant?.name ?? 'Tamarind Social'}</strong>
+      <strong>{restaurant?.name ?? 'FourStar'}</strong>
       <small>{restaurant?.tagline ?? 'INDIAN KITCHEN'}</small>
     </VStack>
   </Link>;

@@ -1,3 +1,4 @@
+import { isOrderId } from '@/lib/domain';
 import { z } from 'zod';
 import { db, restaurantId } from '@/lib/db';
 import { ApiError, jsonBody, respond, verifyOrigin } from '@/lib/http';
@@ -15,7 +16,7 @@ const signatureInput = z.object({
 async function load(request: Request, { params }: Context) {
   verifyOrigin(request);
   const { id } = await params;
-  if (!/^TS-[A-F0-9]{20}$/.test(id)) throw new ApiError(404, 'Order not found.');
+  if (!isOrderId(id)) throw new ApiError(404, 'Order not found.');
   const order = await db.order.findFirst({
     where: { id, restaurantId, payment: 'RAZORPAY_TEST' },
     select: { id: true, total: true, razorpayOrderId: true, paymentVerified: true, restaurant: { select: { name: true } } },

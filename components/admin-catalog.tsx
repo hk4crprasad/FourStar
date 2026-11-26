@@ -94,7 +94,7 @@ function Editor({ resource, menu, record, close, saved }: {
       </>}
       {resource !== 'categories' && <label>{resource === 'restaurant' ? 'Storefront description' : 'Description'}<textarea name="description" defaultValue={resource === 'restaurant' ? restaurant.description : dish?.description} maxLength={600} required /></label>}
       {resource === 'items' && <HStack className="form-pair" gap={2}>
-        <label>Category<select name="categoryId" required defaultValue={dish?.categoryId ?? ''}>
+        <label>Category<select name="categoryId" aria-label="Category" required defaultValue={dish?.categoryId ?? ''}>
           <option value="" disabled>Choose a category</option>{menu.categories.map(entry => <option key={entry.id} value={entry.id}>{entry.name}</option>)}
         </select></label>
         <label>Price (₹)<input name="price" type="number" min="1" max="100000" step="0.01" defaultValue={dish ? dish.price / 100 : undefined} required /></label>

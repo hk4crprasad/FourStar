@@ -6,8 +6,9 @@ export class RequestError extends Error {
 
 export async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, { cache: 'no-store', ...init });
-  const data = await response.json();
-  if (!response.ok) throw new RequestError(data.error || 'Something went wrong. Try again.', response.status);
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new RequestError(data?.error || 'Something went wrong. Try again.', response.status);
+  if (data === null) throw new RequestError('The server returned an unexpected response.', response.status);
   return data as T;
 }
 

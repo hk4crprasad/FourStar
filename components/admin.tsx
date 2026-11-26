@@ -5,19 +5,23 @@ import { Button } from '@astryxdesign/core/Button';
 import { Heading } from '@astryxdesign/core/Heading';
 import { HStack, VStack } from '@astryxdesign/core/Stack';
 import {
-  Activity, ArrowUpRight, BarChart3, Check, ChefHat, ClipboardList, Clock3, History, IndianRupee, LayoutGrid,
+  Activity, ArrowUpRight, BarChart3, BedDouble, Building2, CalendarDays, Check, ChefHat, ClipboardList, Clock3, History, IndianRupee, LayoutGrid,
   LoaderCircle, LogOut, Package, Power, ReceiptText, Settings, Utensils, X,
 } from 'lucide-react';
 import Link from 'next/link';
 import { jsonRequest, request, RequestError } from '@/lib/client';
 import { currency, nextStatuses, paymentLabels, statusLabels, typeLabels, type AdminOrder, type Menu, type OrderStatus } from '@/lib/domain';
+import type { HotelOverview } from '@/lib/hospitality';
+import { HotelAdmin, type HotelTab } from './hotel-admin';
 import { Catalog } from './admin-catalog';
 import { Brand, ErrorNotice, Popup, PoweredBy } from './shared';
 
 const tabs = [
-  ['overview', 'Overview', LayoutGrid], ['orders', 'Live orders', ClipboardList], ['history', 'Order history', History],
+  ['overview', 'Overview', LayoutGrid], ['reservations', 'Reservations', CalendarDays],
+  ['rooms', 'Room inventory', BedDouble], ['roomTypes', 'Room types', Package], ['calendar', 'Availability calendar', CalendarDays],
+  ['orders', 'Live orders', ClipboardList], ['history', 'Order history', History],
   ['items', 'Menu items', Utensils], ['categories', 'Categories', Package], ['reports', 'Daily reports', BarChart3],
-  ['restaurant', 'Restaurant settings', Settings],
+  ['restaurant', 'Restaurant settings', Settings], ['branding', 'Hotel branding', Building2],
 ] as const;
 type Tab = typeof tabs[number][0];
 
@@ -76,7 +80,7 @@ function OrderList({ orders, update, timeZone, live }: {
       {orders.map(entry => <li key={entry.id}>
         <button className="order-row" onClick={() => { select(entry.id); setError(''); }}>
           <VStack className="order-name"><strong>{entry.customerName}</strong><small>{entry.id}</small></VStack>
-          <VStack className="order-type"><strong>{typeLabels[entry.type]}</strong><small>{datetime.format(new Date(entry.createdAt))}</small></VStack>
+          <VStack className="order-type"><strong>{typeLabels[entry.type]}{entry.roomNumber ? ` · Room ${entry.roomNumber}` : ''}</strong><small>{datetime.format(new Date(entry.createdAt))}</small></VStack>
           <p className={`order-status ${entry.status === 'REJECTED' ? 'danger' : ''}`}>{statusLabels[entry.status]}</p>
           <strong className="row-price">{currency(entry.total)}</strong>
           <ArrowUpRight size={17} />
@@ -91,10 +95,11 @@ function OrderList({ orders, update, timeZone, live }: {
         <HStack hAlign="between" gap={1}><dt>Placed</dt><dd>{datetime.format(new Date(order.createdAt))}</dd></HStack>
         <HStack hAlign="between" gap={1}><dt>Phone</dt><dd>{order.customer.mobile}</dd></HStack>
         <HStack hAlign="between" gap={1}><dt>Order type</dt><dd>{typeLabels[order.type]}</dd></HStack>
+        {order.roomNumber && <HStack hAlign="between" gap={1}><dt>Room</dt><dd>{order.roomNumber}</dd></HStack>}
         {order.tableNumber && <HStack hAlign="between" gap={1}><dt>Table</dt><dd>{order.tableNumber}</dd></HStack>}
         {order.address && <HStack hAlign="between" gap={1}><dt>Address</dt><dd>{order.address}</dd></HStack>}
         {order.instructions && <HStack hAlign="between" gap={1}><dt>Cooking instructions</dt><dd>{order.instructions}</dd></HStack>}
-        <HStack hAlign="between" gap={1}><dt>Payment</dt><dd>{paymentLabels[order.payment]}</dd></HStack>
+        <HStack hAlign="between" gap={1}><dt>Payment</dt><dd>{order.type === 'ROOM_SERVICE' ? 'Room charge (demo)' : paymentLabels[order.payment]}</dd></HStack>
       </dl>
       <Heading level={3}>Order items</Heading>
       <ul className="order-detail-items">
@@ -120,6 +125,10 @@ function OrderList({ orders, update, timeZone, live }: {
 }
 
 export function Admin({ initialMenu }: { initialMenu: Menu | null }) {
+  const [hotel, setHotel] = useState<HotelOverview>();
+  const [hotelError, setHotelError] = useState('');
+  const [week, setWeek] = useState('');
+  const hotelLatest = useRef(0);
   const [menu, setMenu] = useState(initialMenu);
   const [overview, setOverview] = useState<Overview>();
   const [tab, setTab] = useState<Tab>('overview');
@@ -156,11 +165,36 @@ export function Admin({ initialMenu }: { initialMenu: Menu | null }) {
 
   useEffect(() => {
     const controller = new AbortController();
+    const update = () => { if (!document.hidden) void refresh(controller.signal); };
     void refresh(controller.signal);
-    const timer = setInterval(() => { if (!document.hidden) void refresh(controller.signal); }, 3000);
-    return () => { controller.abort(); clearInterval(timer); };
+    const timer = setInterval(update, 3000);
+    document.addEventListener('visibilitychange', update);
+    return () => { controller.abort(); clearInterval(timer); document.removeEventListener('visibilitychange', update); };
   }, [refresh]);
   useEffect(() => { if (!initialMenu) void refreshMenu(); }, [initialMenu, refreshMenu]);
+
+  const hotelTab: HotelTab | null = tab === 'reservations' || tab === 'rooms' || tab === 'roomTypes' || tab === 'calendar' || tab === 'branding' ? tab : null;
+  const showHotel = Boolean(hotelTab) || tab === 'overview' || tab === 'reports';
+  const refreshHotel = useCallback(async (signal?: AbortSignal) => {
+    const version = ++hotelLatest.current;
+    const query = new URLSearchParams();
+    if (week) query.set('week', week);
+    if (date && tab === 'reports') query.set('day', date);
+    try {
+      const result = await request<HotelOverview>(`/api/admin/hotel?${query}`, { signal });
+      if (version === hotelLatest.current && !signal?.aborted) { setHotel(result); setHotelError(''); }
+    } catch (cause) { if (version === hotelLatest.current && !signal?.aborted) handle(cause, setHotelError); }
+  }, [date, week, tab, handle]);
+
+  useEffect(() => {
+    if (!showHotel) return;
+    const controller = new AbortController();
+    const update = () => { if (!document.hidden) void refreshHotel(controller.signal); };
+    void refreshHotel(controller.signal);
+    const timer = setInterval(update, 4000);
+    document.addEventListener('visibilitychange', update);
+    return () => { controller.abort(); clearInterval(timer); document.removeEventListener('visibilitychange', update); };
+  }, [showHotel, refreshHotel]);
 
   async function update(id: string, status: OrderStatus) {
     await jsonRequest(`/api/admin/orders/${id}`, 'PATCH', { status });
@@ -199,28 +233,33 @@ export function Admin({ initialMenu }: { initialMenu: Menu | null }) {
     </header>
     <VStack className="admin-shell frame">
       <aside className="admin-nav">
-        <p className="eyebrow">RESTAURANT MANAGEMENT</p>
+        <p className="eyebrow">HOSPITALITY MANAGEMENT</p>
         <nav aria-label="Admin navigation">
           {tabs.map(([key, label, Icon]) => <button key={key} className={tab === key ? 'current' : ''} aria-current={tab === key ? 'page' : undefined}
-            onClick={() => setTab(key)}><Icon size={18} />{label}{key === 'orders' && Boolean(overview?.live.length) && <small>{overview?.live.length}</small>}</button>)}
+            onClick={() => setTab(key)}><Icon size={18} />{label}{key === 'orders' && Boolean(overview?.live.length) && <small>{overview?.live.length}</small>}{key === 'reservations' && Boolean(hotel?.pending) && <small>{hotel?.pending}</small>}</button>)}
         </nav>
         <PoweredBy />
       </aside>
       <main className="admin-main">
         <HStack className="admin-title" hAlign="between" vAlign="center" gap={2}>
           <VStack gap={1}><Heading level={1}>{title}</Heading>
-            {tab === 'overview' && <p className="muted">Today’s orders and kitchen activity.</p>}
+            {tab === 'overview' && <p className="muted">Today’s stays, kitchen activity and sales.</p>}
             {tab === 'orders' && <p className="muted">Incoming orders refresh automatically.</p>}
-            {tab === 'reports' && <p className="muted">Sales totals include completed orders.</p>}
+            {tab === 'reports' && <p className="muted">Food sales count completed orders. Room sales count checked-out stays.</p>}
           </VStack>
-          {menu && <HStack className="kitchen-controls" gap={1} vAlign="center">
+          {menu && !hotelTab && <HStack className="kitchen-controls" gap={1} vAlign="center">
             <p className={`open-state ${menu.acceptingOrders ? 'is-open' : ''}`}><i />{menu.acceptingOrders ? 'Open now' : 'Closed'}</p>
             <Button label={menu.restaurant.isOpen ? 'Close kitchen' : 'Open kitchen'} icon={<Power size={16} />} size="sm" isLoading={toggling} onClick={() => void toggle()} />
           </HStack>}
         </HStack>
         <ErrorNotice>{menuError}</ErrorNotice>
-        <ErrorNotice>{error}</ErrorNotice>
-        {!overview && !onCatalog && (!error
+        <ErrorNotice>{!hotelTab && error}</ErrorNotice>
+        <ErrorNotice>{showHotel && hotelError}</ErrorNotice>
+        {hotelTab && (hotel
+          ? <HotelAdmin key={hotelTab} tab={hotelTab} data={hotel} selectWeek={setWeek} refresh={() => refreshHotel()} />
+          : hotelError ? <Button label="Retry hotel dashboard" onClick={() => void refreshHotel()} />
+          : <HStack className="admin-panel" gap={1} role="status"><LoaderCircle className="animate-spin" size={19} /> Loading hotel dashboard…</HStack>)}
+        {!overview && !onCatalog && !hotelTab && (!error
           ? <HStack className="admin-panel" gap={1} role="status"><LoaderCircle className="animate-spin" size={19} /> Loading orders…</HStack>
           : <Button label="Retry orders" onClick={() => void refresh()} />)}
         {onCatalog && (menu
@@ -232,6 +271,14 @@ export function Admin({ initialMenu }: { initialMenu: Menu | null }) {
             {tab === 'reports' && <input className="field-input" type="date" aria-label="Report date" value={date || overview.day} onChange={event => setDate(event.target.value)} />}
           </HStack>
           <Metrics data={overview} live={tab === 'overview'} />
+          {hotel && <VStack className="metric-grid">
+            {[
+              ['Room sales', currency(hotel.roomSales)],
+              ['Combined revenue', currency(hotel.roomSales + overview.report.sales)],
+              ['Rooms occupied now', `${hotel.occupied} / ${hotel.rooms.length}`],
+              ['Reservations awaiting confirmation', hotel.pending],
+            ].map(([label, value]) => <VStack className="metric" key={label} gap={1}><strong>{value}</strong><p>{label}</p></VStack>)}
+          </VStack>}
         </VStack>}
         {overview && (tab === 'orders' || tab === 'overview') && <section className="admin-panel orders-panel">
           {tab === 'overview' && <HStack className="admin-section-title" hAlign="between" vAlign="center"><Heading level={2}>Live orders</Heading><button className="text-action" onClick={() => setTab('orders')}>View live orders <ArrowUpRight size={15} /></button></HStack>}

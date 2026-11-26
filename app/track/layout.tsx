@@ -11,7 +11,7 @@ export default async function TrackingLayout({ children }: { children: React.Rea
   return <>
     <header className="single-header"><HStack className="frame" hAlign="between" vAlign="center">
       <Brand restaurant={restaurant ?? undefined} />
-      <Link href="/"><ArrowLeft size={16} /> Back to menu</Link>
+      <Link href="/food"><ArrowLeft size={16} /> Back to menu</Link>
     </HStack></header>
     {children}
   </>;

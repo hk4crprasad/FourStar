@@ -62,9 +62,17 @@ async function gateway<T>(path: string, schema: z.ZodType<T>, body?: object) {
 }
 
 export async function createRazorpayOrder(id: string, total: number) {
-  const order = await gateway('orders', gatewayOrder, { amount: total, currency: 'INR', receipt: id });
-  if (order.amount !== total || order.receipt !== id) throw new ApiError(502, 'Razorpay returned an unexpected order amount or receipt.');
-  return order.id;
+  try {
+    const order = await gateway('orders', gatewayOrder, { amount: total, currency: 'INR', receipt: id });
+    if (order.amount !== total || order.receipt !== id) throw new ApiError(502, 'Razorpay returned an unexpected order amount or receipt.');
+    return order.id;
+  } catch (error) {
+    const query = new URLSearchParams({ receipt: id });
+    const result = await gateway(`orders?${query}`, z.object({ items: z.array(gatewayOrder) })).catch(() => null);
+    const existing = result?.items.find(order => order.amount === total && order.receipt === id);
+    if (!existing) throw error;
+    return existing.id;
+  }
 }
 
 type Payment = z.infer<typeof gatewayPayment>;

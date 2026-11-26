@@ -4,11 +4,11 @@ import { type FormEvent, useCallback, useEffect, useState } from 'react';
 import { Button } from '@astryxdesign/core/Button';
 import { Heading } from '@astryxdesign/core/Heading';
 import { HStack, VStack } from '@astryxdesign/core/Stack';
-import { Check, ChefHat, Circle, ClipboardList, Clock3, CreditCard, LoaderCircle, MapPin, X } from 'lucide-react';
+import { ArrowUpRight, Check, ChefHat, Circle, ClipboardList, Clock3, CreditCard, LoaderCircle, MapPin, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { readLocal, request, RequestError } from '@/lib/client';
-import { currency, orderTimeline, statusLabels, typeLabels, type TrackedOrder } from '@/lib/domain';
+import { currency, isOrderId, orderTimeline, statusLabels, typeLabels, type TrackedOrder } from '@/lib/domain';
 import { payWithRazorpay } from '@/lib/razorpay-checkout';
 import { ErrorNotice, PoweredBy } from './shared';
 
@@ -20,7 +20,7 @@ export function TrackLookup() {
   function find(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const id = String(new FormData(event.currentTarget).get('id')).trim().toUpperCase();
-    if (!/^TS-[A-F0-9]{20}$/.test(id)) {
+    if (!isOrderId(id)) {
       setError('Enter the full order ID from your confirmation.');
       return;
     }
@@ -36,7 +36,7 @@ export function TrackLookup() {
       </VStack>
       <VStack className="single-panel" gap={3}>
         <form className="form-stack" onSubmit={find}>
-          <label>Order ID<input name="id" required maxLength={40} placeholder="TS-…" autoComplete="off" /></label>
+          <label>Order ID<input name="id" required maxLength={40} placeholder="FS-…" autoComplete="off" /></label>
           <ErrorNotice>{error}</ErrorNotice>
           <Button className="solid-button" type="submit" label="Find order" size="lg" />
         </form>
@@ -66,9 +66,11 @@ export function OrderTracking({ id, placed }: { id: string; placed: boolean }) {
   useEffect(() => {
     if (finished || notFound) return;
     const controller = new AbortController();
+    const update = () => { if (!document.hidden) void refresh(controller.signal); };
     void refresh(controller.signal);
-    const timer = setInterval(() => { if (!document.hidden) void refresh(controller.signal); }, 3500);
-    return () => { controller.abort(); clearInterval(timer); };
+    const timer = setInterval(update, 3500);
+    document.addEventListener('visibilitychange', update);
+    return () => { controller.abort(); clearInterval(timer); document.removeEventListener('visibilitychange', update); };
   }, [finished, notFound, refresh]);
 
   async function pay() {
@@ -95,6 +97,7 @@ export function OrderTracking({ id, placed }: { id: string; placed: boolean }) {
           <p className="muted">Order ID</p>
           <code className="track-id">{order.id}</code>
           <HStack gap={2} vAlign="center"><MapPin size={17} aria-hidden="true" />{typeLabels[order.type]}<strong>{currency(order.total)}</strong></HStack>
+          {order.type === 'ROOM_SERVICE' && <Link href="/room-service" className="text-action self-start">Back to room service</Link>}
           <Link href="/track" className="text-action self-start">Track another order</Link>
         </>}
       </VStack>
@@ -104,7 +107,8 @@ export function OrderTracking({ id, placed }: { id: string; placed: boolean }) {
         {!order && !error && <HStack gap={1} vAlign="center" role="status"><LoaderCircle className="animate-spin" size={18} /> Loading order…</HStack>}
         {!order && error && (notFound ? <Link href="/track" className="text-action self-start">Check another order ID</Link> : <Button label="Retry" onClick={() => void refresh()} />)}
         {pendingPayment && <>
-          <p className="muted">Use Razorpay’s test details to complete checkout. The kitchen receives your order once the test payment is verified.</p>
+          <p className="muted">The kitchen receives your order once the test payment is verified.</p>
+          <a href="https://razorpay.com/docs/payments/payment-gateway/web-integration/standard/integration-steps#2-test-integration" target="_blank" rel="noreferrer" className="text-action self-start">Razorpay test payment details <ArrowUpRight size={14} /></a>
           <ErrorNotice>{paymentError}</ErrorNotice>
           <Button className="checkout-button" label={`Pay ${currency(order.total)} in Test Mode`} size="lg" isLoading={paying} onClick={() => void pay()} />
         </>}

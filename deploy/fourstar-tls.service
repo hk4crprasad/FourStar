@@ -1,0 +1,8 @@
+[Unit]
+Description=Enable FourStar HTTPS once DNS points to this origin
+Wants=network-online.target
+After=network-online.target nginx.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/fourstar-enable-tls

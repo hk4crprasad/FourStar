@@ -12,3 +12,4 @@ themes/tamarind/sheet*.html
 themes/tamarind/*.png
 themes/tamarind/*.pictures.json
 themes/tamarind/*.history.json
+__pycache__/

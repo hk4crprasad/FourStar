@@ -121,7 +121,7 @@
 .stock-tag { position: absolute; top: 0.5rem; left: 0.5rem; padding: 0.28rem 0.45rem; border-radius: 0.4rem; background: var(--phirmy-dark); color: var(--phirmy-danger); font-weight: 800; }
 .food-info { flex: 1; padding: 0.74rem; gap: 0.45rem; }
 .food-info h3 { font-size: 0.95rem; line-height: 1.3; letter-spacing: -0.035em; overflow-wrap: anywhere; }
-.food-info p { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: 0.72rem; line-height: 1.55; color: var(--color-text-secondary); min-height: 2.2em; }
+.food-info p { font-size: 0.72rem; line-height: 1.55; color: var(--color-text-secondary); min-height: 2.2em; }
 .diet-icon { width: 0.72rem; height: 0.72rem; display: grid; place-items: center; flex: none; border: 0.0625rem solid currentColor; border-radius: 0.12rem; color: var(--phirmy-lime-text); }
 .diet-icon::after { content: ''; width: 0.32rem; height: 0.32rem; background: currentColor; border-radius: 50%; }
 .diet-icon.non-vegetarian { color: var(--phirmy-danger); }
@@ -264,7 +264,7 @@
   .hero-caption { bottom: 0.58rem; right: 0.6rem; }
   .store-meta { padding-bottom: 0.8rem; gap: 0.58rem; }
   .store-location { white-space: normal; padding-left: 0.55rem; }
-  .store-meta .hours { display: none; }
+  .store-meta .hours:not(.scheduled) { display: none; }
   .app-theme .food-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.65rem; }
   .food-info { padding: 0.59rem; }
   .food-info h3 { font-size: 0.87rem; }
@@ -359,4 +359,130 @@
   .hero { min-height: 20.8rem; }
   .category { min-height: 5.7rem; }
   .food-photo { aspect-ratio: 1.52; }
+}
+
+.hotel-nav-frame { min-height: 4.75rem; }
+.hotel-nav-frame nav { display: flex; align-items: center; gap: clamp(1rem, 3vw, 2.65rem); }
+.hotel-nav-frame nav a, .hotel-footer a:not(.brand) { color: var(--color-text-secondary); display: inline-flex; align-items: center; gap: 0.25rem; font-weight: 750; }
+.hotel-nav-frame nav a:hover, .hotel-footer a:hover { color: var(--phirmy-lime-text); }
+.hotel-button { display: inline-flex; align-items: center; justify-content: center; gap: 0.55rem; background: var(--phirmy-accent); color: var(--phirmy-dark); border: 0.0625rem solid transparent; border-radius: 0.65rem; padding: 0.62rem 0.95rem; min-height: 2.8rem; font-weight: 850; white-space: nowrap; }
+.hotel-button:hover { background: var(--phirmy-lime-text); }
+.hotel-button-small { min-height: 2.45rem; padding: 0.47rem 0.7rem; font-size: 0.76rem; }
+.hotel-button-outline { background: color-mix(in srgb, var(--phirmy-dark) 68%, transparent); color: var(--color-text-primary); border-color: var(--phirmy-border-strong); }
+.hotel-button-outline:hover { color: var(--phirmy-lime-text); background: var(--phirmy-dark); border-color: var(--phirmy-accent); }
+.hotel-home { padding-top: 1.7rem; }
+.hotel-hero { isolation: isolate; position: relative; overflow: hidden; display: flex; align-items: center; min-height: clamp(26rem, 39vw, 34rem); border: 0.0625rem solid var(--phirmy-border); border-radius: 1.18rem; }
+.hotel-hero-photo { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -2; object-fit: cover; object-position: 61% center; }
+.hotel-hero::after { content: ''; position: absolute; z-index: -1; inset: 0; background: linear-gradient(90deg, var(--phirmy-dark), color-mix(in srgb, var(--phirmy-dark) 70%, transparent) 30%, transparent 68%); }
+.hotel-hero-content { padding: clamp(1.6rem, 5.5vw, 5.2rem); max-width: 42rem; }
+.hotel-location { display: flex; align-items: center; gap: 0.45rem; }
+.app-theme .hotel-hero h1 { font-size: clamp(3.5rem, 7.2vw, 7.2rem); letter-spacing: -0.078em; line-height: 0.98; color: var(--color-text-primary); }
+.hotel-hero h1 em { display: block; font-style: normal; color: var(--phirmy-lime-text); overflow-wrap: anywhere; }
+.hotel-hero-content > p:not(.eyebrow) { max-width: 20rem; color: var(--phirmy-hero-muted); line-height: 1.6; margin-block: 0.15rem 0.65rem; }
+.hotel-section { margin-top: 2.15rem; }
+.hotel-section-header { margin-bottom: 0.9rem; }
+.app-theme .hotel-section h2, .booking-page h2 { font-size: clamp(1.28rem, 3vw, 1.85rem); line-height: 1.16; letter-spacing: -0.04em; }
+.app-theme .hotel-room-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.95rem; }
+.room-card, .hotel-food-card { min-width: 0; overflow: hidden; border: 0.0625rem solid var(--phirmy-border); border-radius: 0.8rem; background: var(--phirmy-card); }
+.room-card-photo { display: block; aspect-ratio: 1.55; overflow: hidden; }
+.room-card-photo img, .hotel-food-card img { width: 100%; height: 100%; object-fit: cover; transition: transform 240ms; }
+.room-card-photo:hover img, .hotel-food-card:hover img { transform: scale(1.045); }
+.room-card-body { flex: 1; padding: 0.82rem; }
+.room-card-body h3 { font-size: 1.05rem; letter-spacing: -0.03em; }
+.room-card-body > p { font-size: 0.73rem; }
+.room-card-foot { margin-top: auto; padding-top: 0.35rem; }
+.room-card-foot small, .hotel-food-card small { color: var(--color-text-secondary); }
+.room-card-foot strong { font-size: 1.04rem; }
+.room-card-arrow { display: grid; place-items: center; width: 2rem; min-height: 2rem; flex: none; color: var(--phirmy-lime-text); border: 0.0625rem solid var(--phirmy-border-strong); border-radius: 0.5rem; }
+.room-card-arrow:hover { color: var(--phirmy-dark); background: var(--phirmy-accent); }
+.room-features, .room-detail-amenities { display: flex; align-items: center; flex-wrap: wrap; gap: 0.36rem 0.65rem; padding: 0; list-style: none; color: var(--color-text-secondary); font-size: 0.75rem; }
+.room-features li, .room-detail-amenities li { display: flex; align-items: center; gap: 0.27rem; }
+.room-features svg, .room-detail-amenities svg { flex: none; color: var(--phirmy-lime-text); }
+.hotel-food-card img, .hotel-food-card > .photo-fallback { aspect-ratio: 1.85; height: auto; }
+.hotel-food-card > :last-child { padding: 0.65rem 0.78rem; }
+.hotel-food-card:hover { border-color: var(--phirmy-border-strong); }
+.hotel-food-card strong { overflow-wrap: anywhere; }
+.hotel-stay-info { display: grid; grid-template-columns: 1.2fr minmax(0, 0.65fr); gap: 2rem; border-top: 0.0625rem solid var(--phirmy-border); padding-block: 1.65rem; }
+.hotel-amenities { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; padding: 0; }
+.hotel-amenities li { display: flex; align-items: start; gap: 0.6rem; }
+.hotel-amenities li svg, .hotel-contact svg { color: var(--phirmy-lime-text); flex: none; }
+.hotel-amenities li small { color: var(--color-text-secondary); }
+.hotel-contact { padding: 1.05rem; background: var(--color-background-surface); border: 0.0625rem solid var(--phirmy-border); border-radius: 0.8rem; }
+.hotel-contact :is(p,a) { display: inline-flex; align-items: center; gap: 0.5rem; overflow-wrap: anywhere; }
+.hotel-contact a:hover { color: var(--phirmy-lime-text); }
+.hotel-footer { display: flex; justify-content: space-between; align-items: center; gap: 1rem; border-top: 0.0625rem solid var(--phirmy-border); padding-block: 1.35rem; margin-top: 1.55rem; }
+
+.booking-page { padding-block: 2rem; }
+.booking-title { margin-bottom: 1rem; }
+.booking-title h1 { font-size: clamp(2rem, 5.35vw, 3.4rem); letter-spacing: -0.06em; line-height: 1; }
+.booking-title p:not(.eyebrow) { line-height: 1.6; max-width: 40rem; }
+.stay-form { grid-template-columns: repeat(3, minmax(0,1fr)) auto; align-items: end; }
+.stay-form input[type="date"] { display: block; min-width: 0; }
+.stay-form button { min-height: 2.57rem; }
+.stay-result { color: var(--phirmy-lime-text); font-weight: 750; }
+.room-catalogue { margin-top: 1.35rem; }
+.booking-back { margin-bottom: 1rem; }
+.app-theme .room-detail-layout { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(19rem, 1fr); gap: 1.45rem; align-items: start; }
+.stay-panel { position: sticky; top: 6rem; }
+.stay-panel .stay-form { grid-template-columns: repeat(2, minmax(0,1fr)); }
+.stay-panel .breakdown { margin-bottom: 0; }
+.room-main-photo { width: 100%; aspect-ratio: 1.68; display: block; object-fit: cover; border-radius: 0.9rem; }
+.room-thumbs { overflow-x: auto; }
+.room-thumbs button { overflow: hidden; border-radius: 0.55rem; width: 5rem; flex: none; border: 0.12rem solid transparent; aspect-ratio: 1.5; }
+.room-thumbs button[aria-pressed="true"] { border-color: var(--phirmy-accent); }
+.room-thumbs img { width: 100%; height: 100%; object-fit: cover; }
+.room-detail-amenities { font-size: 0.86rem; padding-top: 0.65rem; }
+.booking-tracking .hotel-button { margin-top: 0.45rem; }
+.room-service-banner { margin-bottom: 0.8rem; padding: 0.6rem 0.75rem; border: 0.0625rem solid var(--phirmy-border-strong); border-radius: 0.62rem; background: var(--color-background-surface); }
+.room-service-banner p, .room-service-chip { color: var(--phirmy-lime-text); display: flex; align-items: center; gap: 0.43rem; font-weight: 800; }
+.room-service-chip { background: color-mix(in srgb, var(--phirmy-accent) 9%, transparent); padding: 0.5rem; border-radius: 0.5rem; }
+@media (max-width: 63rem) {
+  .hotel-nav-frame nav { gap: 1rem; }
+  .app-theme .hotel-room-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+@media (max-width: 51rem) {
+  .hotel-nav-frame { flex-wrap: wrap; gap: 0.2rem 0.75rem; padding-block: 0.6rem 0; min-height: 0; }
+  .hotel-nav-frame nav { order: 3; width: 100%; min-height: 2.65rem; overflow: auto; white-space: nowrap; justify-content: space-between; gap: 0.7rem; font-size: 0.74rem; }
+  .hotel-nav-frame nav a { min-height: 2.65rem; }
+  .hotel-home, .booking-page { padding-top: 1rem; }
+  .hotel-hero { min-height: 24rem; }
+  .hotel-hero::after { background: linear-gradient(90deg, var(--phirmy-dark), color-mix(in srgb, var(--phirmy-dark) 70%, transparent) 57%, transparent); }
+  .app-theme .hotel-hero h1 { font-size: clamp(3.25rem, 11vw, 5.25rem); }
+  .hotel-hero-content { padding-inline: 1.35rem; }
+  .hotel-stay-info, .app-theme .room-detail-layout { grid-template-columns: minmax(0,1fr); gap: 1rem; }
+  .stay-panel { position: static; }
+  .stay-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 30rem) {
+  .app-theme .hotel-room-grid { gap: 0.55rem; }
+  .room-card-body { padding: 0.55rem; }
+  .room-card-body h3 { font-size: 0.91rem; }
+  .room-features { font-size: 0.68rem; }
+  .room-features svg { width: 0.8rem; }
+  .room-card-foot strong { font-size: 0.85rem; }
+  .room-card-arrow { width: 1.7rem; min-height: 1.7rem; }
+  .hotel-footer { flex-wrap: wrap; }
+  .stay-form { gap: 0.65rem; }
+  .stay-form button { padding-inline: 0.35rem; white-space: normal; }
+}
+
+.room-summary > p { padding: 0.55rem 0.75rem; border: 0.0625rem solid var(--phirmy-border); border-radius: 0.5rem; color: var(--color-text-secondary); background: var(--color-background-surface); }
+.room-summary strong { color: var(--phirmy-lime-text); }
+.hotel-inventory-list, .admin-reservation-events { list-style: none; padding: 0; }
+.hotel-inventory-list li { display: grid; grid-template-columns: minmax(0,1.1fr) minmax(0,0.65fr) minmax(0,0.85fr) auto; gap: 0.65rem; align-items: center; padding-block: 0.65rem; }
+.hotel-inventory-list li + li, .admin-reservation-events li + li { border-top: 0.0625rem solid var(--phirmy-border); }
+.hotel-inventory-list :is(p,small), .admin-reservation-events time { color: var(--color-text-secondary); }
+.room-qr { width: min(100%, 17rem); align-self: center; overflow: hidden; border-radius: 0.5rem; }
+.admin-reservation-events li { display: flex; align-items: center; gap: 0.35rem; padding-block: 0.42rem; }
+.admin-reservation-events svg { color: var(--phirmy-lime-text); flex: none; }
+.admin-reservation-events time { margin-left: auto; font-size: 0.72rem; text-align: end; }
+.app-theme .room-calendar-scroll { overflow-x: auto; }
+.room-calendar { min-width: 45rem; width: 100%; border-collapse: separate; border-spacing: 0; text-align: center; font-size: 0.75rem; }
+.room-calendar th, .room-calendar td { min-width: 4.25rem; padding: 0.6rem 0.4rem; border-right: 0.0625rem solid var(--phirmy-border); border-bottom: 0.0625rem solid var(--phirmy-border); }
+.room-calendar thead th { background: var(--phirmy-mode); }
+.room-calendar th:first-child { position: sticky; left: 0; background: var(--phirmy-mode); }
+.room-calendar .reserved-night { background: color-mix(in srgb, var(--phirmy-accent) 10%, var(--phirmy-mode)); color: var(--phirmy-lime-text); }
+@media (max-width: 42rem) {
+  .hotel-inventory-list li { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 0.35rem; }
+  .hotel-inventory-list li > :last-child { justify-self: end; }
 }

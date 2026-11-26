@@ -1,0 +1,10 @@
+[Unit]
+Description=Check FourStar DNS during initial TLS setup
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+Unit=fourstar-tls.service
+
+[Install]
+WantedBy=timers.target

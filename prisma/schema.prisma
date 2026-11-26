@@ -11,6 +11,7 @@ enum OrderType {
   DINE_IN
   TAKEAWAY
   DELIVERY
+  ROOM_SERVICE
 }
 
 enum OrderStatus {
@@ -46,6 +47,7 @@ model Restaurant {
   categories   Category[]
   items        MenuItem[]
   orders       Order[]
+  hotel        Hotel?
 }
 
 model Category {
@@ -110,11 +112,15 @@ model Order {
   delivery     Int
   total        Int
   items        OrderItem[]
+  reservationId String?
+  reservation  Reservation? @relation(fields: [reservationId], references: [id])
+  roomNumber   String?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
   @@index([restaurantId, status, createdAt])
   @@index([restaurantId, createdAt])
+  @@index([reservationId])
 }
 
 model OrderItem {
@@ -130,4 +136,158 @@ model OrderItem {
 
   @@index([orderId])
   @@index([menuItemId])
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  CHECKED_IN
+  CHECKED_OUT
+  CANCELLED
+}
+
+enum RoomCondition {
+  AVAILABLE
+  MAINTENANCE
+}
+
+enum HousekeepingStatus {
+  CLEAN
+  DIRTY
+  IN_PROGRESS
+}
+
+model Hotel {
+  id           String       @id
+  restaurantId String       @unique
+  restaurant   Restaurant   @relation(fields: [restaurantId], references: [id])
+  name         String
+  tagline      String
+  location     String
+  description  String
+  heroUrl      String
+  logoUrl      String?
+  email        String
+  phone        String
+  timeZone     String       @default("Asia/Kolkata")
+  roomTypes    RoomType[]
+  rooms        Room[]
+  amenities    Amenity[]
+  reservations Reservation[]
+}
+
+model Amenity {
+  id           String     @id @default(cuid())
+  hotelId      String
+  hotel        Hotel      @relation(fields: [hotelId], references: [id])
+  name         String
+  description  String
+  hotelFeature Boolean    @default(false)
+  roomTypes    RoomType[]
+
+  @@unique([hotelId, name])
+}
+
+model RoomType {
+  id           String       @id @default(cuid())
+  hotelId      String
+  hotel        Hotel        @relation(fields: [hotelId], references: [id])
+  name         String
+  description  String
+  beds         String
+  sizeM2       Int
+  capacity     Int
+  nightlyRate  Int
+  position     Int          @default(0)
+  isListed     Boolean      @default(true)
+  images       RoomImage[]
+  amenities    Amenity[]
+  rooms        Room[]
+
+  @@unique([hotelId, name])
+}
+
+model RoomImage {
+  id         String   @id @default(cuid())
+  roomTypeId String
+  roomType   RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  url        String
+  position   Int      @default(0)
+
+  @@unique([roomTypeId, position])
+}
+
+model Room {
+  id           String             @id @default(cuid())
+  hotelId      String
+  hotel        Hotel              @relation(fields: [hotelId], references: [id])
+  roomTypeId   String
+  roomType     RoomType           @relation(fields: [roomTypeId], references: [id])
+  number       String
+  floor        String
+  condition    RoomCondition      @default(AVAILABLE)
+  housekeeping HousekeepingStatus @default(CLEAN)
+  qrToken      String             @unique @default(uuid())
+  reservations Reservation[]
+  nights       ReservationNight[]
+
+  @@unique([hotelId, number])
+  @@index([roomTypeId])
+}
+
+model Guest {
+  id           String        @id @default(cuid())
+  mobile       String        @unique
+  reservations Reservation[]
+}
+
+model Reservation {
+  id           String              @id
+  requestId    String              @unique
+  hotelId      String
+  hotel        Hotel               @relation(fields: [hotelId], references: [id])
+  roomId       String
+  room         Room                @relation(fields: [roomId], references: [id])
+  guestId      String
+  guest        Guest               @relation(fields: [guestId], references: [id])
+  guestName    String
+  email        String
+  roomTypeName String
+  checkIn      DateTime            @db.Date
+  checkOut     DateTime            @db.Date
+  guestCount   Int
+  nightlyRate  Int
+  total        Int
+  payment      PaymentMethod
+  status       ReservationStatus   @default(PENDING)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  history      ReservationEvent[]
+  nights       ReservationNight[]
+  orders       Order[]
+
+  @@index([hotelId, status, createdAt])
+  @@index([roomId, status])
+}
+
+model ReservationEvent {
+  id            String            @id @default(cuid())
+  reservationId String
+  reservation   Reservation       @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  status        ReservationStatus
+  at            DateTime         @default(now())
+
+  @@index([reservationId, at])
+}
+
+// A room can hold one reservation per night, even across concurrent transactions.
+model ReservationNight {
+  roomId        String
+  room          Room        @relation(fields: [roomId], references: [id])
+  night         DateTime    @db.Date
+  reservationId String
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+
+  @@id([roomId, night])
+  @@index([reservationId])
 }

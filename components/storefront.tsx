@@ -6,7 +6,7 @@ import { Heading } from '@astryxdesign/core/Heading';
 import { HStack, VStack } from '@astryxdesign/core/Stack';
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
 import {
-  ArrowRight, ArrowUpRight, Bike, ChevronLeft, ChevronRight, Clock3,
+  ArrowRight, ArrowUpRight, Bike, ChevronLeft, ChevronRight, Clock3, ConciergeBell,
   Flame, House, Leaf, MapPin, Minus, Plus, ReceiptText, Search, ShoppingBag, Trash2, Utensils, UtensilsCrossed, X,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -74,14 +74,14 @@ function Breakdown({ amount, deliveryType, taxBps, empty }: { amount: ReturnType
   </dl>;
 }
 
-function CartContents({ lines, count, type, setType, change, remove, amount, taxBps, canOrder, checkout }: {
+function CartContents({ lines, count, type, setType, change, remove, amount, taxBps, canOrder, checkout, roomNumber }: {
   lines: Line[]; count: number; type: OrderType; setType: (type: OrderType) => void;
   change: (line: CartLine, delta: number) => void; remove: (key: string) => void;
-  amount: ReturnType<typeof totals>; taxBps: number; canOrder: boolean; checkout: () => void;
+  amount: ReturnType<typeof totals>; taxBps: number; canOrder: boolean; checkout: () => void; roomNumber?: string;
 }) {
   const invalid = lines.some(line => line.invalid);
   return <>
-    <ModePicker type={type} select={setType} />
+    {roomNumber ? <p className="room-service-chip"><ConciergeBell size={16} /> Room {roomNumber} · Room service</p> : <ModePicker type={type} select={setType} />}
     {count === 0 ? <VStack className="empty-cart" align="center">
       <HStack className="empty-cart-icon" hAlign="center" vAlign="center"><ShoppingBag size={35} strokeWidth={1.45} /></HStack>
       <strong>Your cart is empty</strong>
@@ -125,8 +125,8 @@ function Customise({ item, close, add }: { item: MenuItem; close: () => void; ad
   </Popup>;
 }
 
-function Checkout({ lines, type, setType, close, menu, completed }: {
-  lines: CartLine[]; type: OrderType; setType: (type: OrderType) => void; close: () => void; menu: Menu; completed: (id: string, paidOnline: boolean) => void;
+function Checkout({ lines, type, setType, close, menu, completed, roomNumber }: {
+  lines: CartLine[]; type: OrderType; setType: (type: OrderType) => void; close: () => void; menu: Menu; completed: (id: string, paidOnline: boolean) => void; roomNumber?: string;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -143,9 +143,9 @@ function Checkout({ lines, type, setType, close, menu, completed }: {
     if (busy) return;
     const form = new FormData(event.currentTarget);
     const data = {
-      customerName: form.get('customerName'), mobile: form.get('mobile'), type,
+      customerName: form.get('customerName') ?? undefined, mobile: form.get('mobile') ?? undefined, type,
       tableNumber: form.get('tableNumber') ?? undefined, address: form.get('address') ?? undefined,
-      instructions: form.get('instructions'), payment: form.get('payment'), items: lines,
+      instructions: form.get('instructions'), payment: roomNumber ? 'CASH' : form.get('payment'), items: lines,
     };
     const payload = JSON.stringify(data);
     if (draft.current?.payload !== payload) draft.current = { payload, id: crypto.randomUUID() };
@@ -162,13 +162,15 @@ function Checkout({ lines, type, setType, close, menu, completed }: {
 
   return <Popup title="Checkout" close={close} busy={busy}>
     <form className="form-stack" onSubmit={submit}>
-      <ModePicker type={type} select={mode => { if (!busy) setType(mode); }} />
-      <label>Full name<input name="customerName" maxLength={100} autoComplete="name" required placeholder="Your name" /></label>
-      <label>Mobile number<input name="mobile" type="tel" autoComplete="tel" maxLength={20} required placeholder="10-digit Indian mobile number" /></label>
+      {roomNumber ? <p className="room-service-chip"><ConciergeBell size={17} /> Deliver to room {roomNumber}</p> : <>
+        <ModePicker type={type} select={mode => { if (!busy) setType(mode); }} />
+        <label>Full name<input name="customerName" maxLength={100} autoComplete="name" required placeholder="Your name" /></label>
+        <label>Mobile number<input name="mobile" type="tel" autoComplete="tel" maxLength={20} required placeholder="10-digit Indian mobile number" /></label>
+      </>}
       {type === 'DINE_IN' && <label>Table number<input name="tableNumber" required maxLength={20} placeholder="e.g. 12" /></label>}
       {type === 'DELIVERY' && <label>Delivery address<textarea name="address" required minLength={8} maxLength={350} autoComplete="street-address" placeholder="House or flat number, street and area" /></label>}
       <label>Cooking instructions <small>(optional)</small><textarea name="instructions" maxLength={350} placeholder="Allergies, spice level or other requests" /></label>
-      <label>Payment method<select name="payment" value={payment} onChange={event => setPayment(event.target.value as typeof payment)}>{paymentChoices.map(payment => <option key={payment} value={payment}>{paymentLabels[payment]}</option>)}</select></label>
+      {roomNumber ? <p>Payment method · Room charge (demo)</p> : <label>Payment method<select name="payment" value={payment} onChange={event => setPayment(event.target.value as typeof payment)}>{paymentChoices.map(payment => <option key={payment} value={payment}>{paymentLabels[payment]}</option>)}</select></label>}
       <p className="muted">Demo checkout. No payment is collected.</p>
       <Breakdown amount={amount} deliveryType={type} taxBps={menu.restaurant.taxBps} />
       <ErrorNotice>{error}</ErrorNotice>
@@ -177,21 +179,23 @@ function Checkout({ lines, type, setType, close, menu, completed }: {
   </Popup>;
 }
 
-export function Storefront({ initialMenu }: { initialMenu: Menu | null }) {
+export function Storefront({ initialMenu, roomNumber, initialQuery = '' }: { initialMenu: Menu | null; roomNumber?: string; initialQuery?: string }) {
   const [menu, setMenu] = useState(initialMenu);
   const [unavailable, setUnavailable] = useState(!initialMenu);
   const [cart, setCart] = useState<CartLine[]>([]);
-  const [type, setType] = useState<OrderType>('DELIVERY');
+  const [type, setType] = useState<OrderType>(roomNumber ? 'ROOM_SERVICE' : 'DELIVERY');
   const [hydrated, setHydrated] = useState(false);
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(initialQuery);
   const [categoryId, setCategoryId] = useState('all');
   const [vegOnly, setVegOnly] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [customise, setCustomise] = useState<MenuItem>();
   const [toast, setToast] = useState<{ text: string; id: number }>();
-  const [active, setActive] = useState('home');
+  const [active, setActive] = useState(initialQuery ? 'menu' : 'home');
+  const [roomError, setRoomError] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
+  const [categoryScroll, setCategoryScroll] = useState({ previous: false, next: false });
   const categoryRow = useRef<HTMLElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -202,22 +206,38 @@ export function Storefront({ initialMenu }: { initialMenu: Menu | null }) {
   }
 
   useEffect(() => {
-    setCart(readLocal<CartLine[]>(cartKey, []));
-    const saved = readLocal<OrderType>(typeKey, 'DELIVERY');
-    if (modes.includes(saved)) setType(saved);
+    if (!roomNumber) {
+      setCart(readLocal<CartLine[]>(cartKey, []));
+      const saved = readLocal<OrderType>(typeKey, 'DELIVERY');
+      if (modes.some(mode => mode === saved)) setType(saved);
+    }
     setHydrated(true);
     const interval = window.setInterval(refresh, 30_000);
     const onFocus = () => { void refresh(); };
     window.addEventListener('focus', onFocus);
     return () => { window.clearInterval(interval); window.removeEventListener('focus', onFocus); };
-  }, []);
-  useEffect(() => { if (hydrated) { writeLocal(cartKey, cart); writeLocal(typeKey, type); } }, [cart, type, hydrated]);
+  }, [roomNumber]);
+  useEffect(() => { if (hydrated && !roomNumber) { writeLocal(cartKey, cart); writeLocal(typeKey, type); } }, [cart, type, hydrated, roomNumber]);
   useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => setToast(undefined), 2400);
     return () => clearTimeout(timer);
   }, [toast]);
   useEffect(() => { if (searchOpen) searchRef.current?.focus(); }, [searchOpen]);
+
+  useEffect(() => {
+    const row = categoryRow.current;
+    if (!row) return;
+    const update = () => setCategoryScroll({
+      previous: row.scrollLeft > 2,
+      next: row.scrollLeft + row.clientWidth < row.scrollWidth - 2,
+    });
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(row);
+    row.addEventListener('scroll', update, { passive: true });
+    return () => { observer.disconnect(); row.removeEventListener('scroll', update); };
+  }, [menu]);
 
   const restaurant = menu?.restaurant;
   const items = menu?.items ?? [];
@@ -279,7 +299,12 @@ export function Storefront({ initialMenu }: { initialMenu: Menu | null }) {
       add={() => item.options.length ? setCustomise(item) : addDish(item)}
       change={delta => change({ menuItemId: item.id, picks: [], quantity: 1 }, delta)} />)}
   </VStack>;
-  const cartContents = <CartContents lines={lines} count={count} type={type} setType={setType} change={change}
+  async function leaveRoomService() {
+    try { await jsonRequest('/api/room-service', 'DELETE'); window.location.assign('/room-service'); }
+    catch (cause) { setRoomError((cause as Error).message); }
+  }
+
+  const cartContents = <CartContents roomNumber={roomNumber} lines={lines} count={count} type={type} setType={setType} change={change}
     remove={key => setCart(previous => previous.filter(line => lineKey(line) !== key))}
     amount={amount} taxBps={restaurant?.taxBps ?? 0} canOrder={Boolean(menu?.acceptingOrders)} checkout={openCheckout} />;
 
@@ -291,7 +316,7 @@ export function Storefront({ initialMenu }: { initialMenu: Menu | null }) {
           {restaurant && <p className="location"><MapPin size={16} />{restaurant.location}</p>}
         </HStack>
         <nav className="desktop-nav" aria-label="Main navigation">
-          <button className={active === 'home' ? 'current' : ''} onClick={() => section('home')}>Home</button>
+          <Link href="/">Hotel</Link>
           <button className={active === 'menu' ? 'current' : ''} onClick={() => section('menu')}>Menu</button>
           <Link href="/track">Track order</Link>
         </nav>
@@ -308,11 +333,17 @@ export function Storefront({ initialMenu }: { initialMenu: Menu | null }) {
     </header>
     <main className="frame shop-layout" aria-label="Restaurant menu">
       <VStack className="shop-content">
+        {roomNumber && <VStack gap={1} className="room-service-banner">
+          <HStack gap={2} hAlign="between" vAlign="center"><p><ConciergeBell size={19} /> Room service · Room {roomNumber}</p>
+            <Button label="End room session" size="sm" variant="ghost" onClick={() => void leaveRoomService()} />
+          </HStack>
+          <ErrorNotice>{roomError}</ErrorNotice>
+        </VStack>}
         <section className="hero" aria-labelledby="hero-title">
           <img className="hero-photo" src="/food/hero.webp" alt="" fetchPriority="high" />
           <VStack className="hero-content">
             <p className="eyebrow hero-eyebrow"><i /> FROM THE INDIAN KITCHEN</p>
-            <Heading level={1} id="hero-title" className="hero-title">From our tandoor<br /><em>to your table.</em></Heading>
+            <Heading level={1} id="hero-title" className="hero-title">From our tandoor<br /><em>{roomNumber ? 'to your room.' : 'to your table.'}</em></Heading>
             <p className="hero-copy">{restaurant?.description ?? 'Tandoor favourites, slow-cooked curries and more from our Indian kitchen.'}</p>
             <Button className="solid-button hero-action" label="Explore menu" size="lg" onClick={() => section('menu')}>Explore menu <ArrowRight size={17} /></Button>
           </VStack>
@@ -320,7 +351,7 @@ export function Storefront({ initialMenu }: { initialMenu: Menu | null }) {
         </section>
         <HStack className="store-meta" vAlign="center" gap={2}>
           <p className={`open-state ${menu?.acceptingOrders ? 'is-open' : ''}`}><i />{menu ? (menu.acceptingOrders ? 'Open now' : 'Kitchen closed') : 'Hours unavailable'}</p>
-          {restaurant && <p className="hours"><Clock3 size={15} />{restaurant.opensAt === restaurant.closesAt ? 'Open daily' : `${restaurant.opensAt} – ${restaurant.closesAt}`}</p>}
+          {restaurant && <p className={`hours ${restaurant.opensAt !== restaurant.closesAt ? 'scheduled' : ''}`}><Clock3 size={15} />{restaurant.opensAt === restaurant.closesAt ? 'Open daily' : `${restaurant.opensAt} – ${restaurant.closesAt}`}</p>}
           {restaurant && <p className="store-location"><MapPin size={15} />{restaurant.location}</p>}
         </HStack>
         {unavailable && <HStack className="menu-error" gap={2} vAlign="center">
@@ -332,8 +363,8 @@ export function Storefront({ initialMenu }: { initialMenu: Menu | null }) {
             <HStack className="section-head" hAlign="between" vAlign="center">
               <Heading level={2} id="category-title">Browse Categories</Heading>
               <HStack className="scroll-arrows" gap={1}>
-                <Button label="Previous categories" isIconOnly size="sm" variant="ghost" icon={<ChevronLeft size={18} />} onClick={() => categoryRow.current?.scrollBy({ left: -320, behavior: 'smooth' })} />
-                <Button label="Next categories" isIconOnly size="sm" variant="ghost" icon={<ChevronRight size={18} />} onClick={() => categoryRow.current?.scrollBy({ left: 320, behavior: 'smooth' })} />
+                <Button label="Previous categories" isDisabled={!categoryScroll.previous} isIconOnly size="sm" variant="ghost" icon={<ChevronLeft size={18} />} onClick={() => categoryRow.current?.scrollBy({ left: -320, behavior: 'smooth' })} />
+                <Button label="Next categories" isDisabled={!categoryScroll.next} isIconOnly size="sm" variant="ghost" icon={<ChevronRight size={18} />} onClick={() => categoryRow.current?.scrollBy({ left: 320, behavior: 'smooth' })} />
               </HStack>
             </HStack>
             <HStack className="category-row" ref={categoryRow} role="group" aria-label="Menu categories">
@@ -377,7 +408,7 @@ export function Storefront({ initialMenu }: { initialMenu: Menu | null }) {
       </aside>
     </main>
     <nav className="mobile-nav" aria-label="Mobile navigation">
-      <button className={active === 'home' ? 'current' : ''} onClick={() => section('home')}><House size={20} />Home</button>
+      <Link href="/"><House size={20} />Hotel</Link>
       <button className={active === 'menu' ? 'current' : ''} onClick={() => section('menu')}><UtensilsCrossed size={20} />Menu</button>
       <Link href="/track"><ReceiptText size={20} />Orders</Link>
       <button onClick={() => setCartOpen(true)}><ShoppingBag size={20} />Cart{count > 0 ? ` (${count})` : ''}</button>
@@ -394,8 +425,8 @@ export function Storefront({ initialMenu }: { initialMenu: Menu | null }) {
     </AnimatePresence>
     {cartOpen && <Popup title="Your Cart" close={() => setCartOpen(false)} end>{cartContents}</Popup>}
     {customise && <Customise item={customise} close={() => setCustomise(undefined)} add={picks => addDish(customise, picks)} />}
-    {checkoutOpen && menu && <Checkout lines={cart} type={type} setType={setType} close={() => setCheckoutOpen(false)} menu={menu} completed={(id, online) => {
-      setCart([]); writeLocal(cartKey, []); writeLocal('phirmy-last-order', id); setCheckoutOpen(false); router.push(`/track/${id}${online ? '' : '?placed=1'}`);
+    {checkoutOpen && menu && <Checkout roomNumber={roomNumber} lines={cart} type={type} setType={setType} close={() => setCheckoutOpen(false)} menu={menu} completed={(id, online) => {
+      setCart([]); if (!roomNumber) writeLocal(cartKey, []); writeLocal('phirmy-last-order', id); setCheckoutOpen(false); router.push(`/track/${id}${online ? '' : '?placed=1'}`);
     }} />}
   </MotionConfig>;
 }

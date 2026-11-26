@@ -7,17 +7,35 @@ export class ApiError extends Error {
   }
 }
 
-export async function jsonBody(request: Request) {
-  try {
-    return await request.json() as unknown;
-  } catch {
-    throw new ApiError(400, 'Send a valid JSON request.');
+export async function readBody(request: Request, maxBytes: number, tooLarge: string) {
+  if (Number(request.headers.get('content-length')) > maxBytes) throw new ApiError(413, tooLarge);
+  const reader = request.body?.getReader();
+  if (!reader) return Buffer.alloc(0);
+  const chunks: Uint8Array[] = [];
+  let bytes = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) return Buffer.concat(chunks, bytes);
+    bytes += value.length;
+    if (bytes > maxBytes) {
+      await reader.cancel();
+      throw new ApiError(413, tooLarge);
+    }
+    chunks.push(value);
   }
+}
+
+export async function jsonBody(request: Request) {
+  const body = await readBody(request, 64 * 1024, 'This request is too large.');
+  try { return JSON.parse(body.toString('utf8')) as unknown; }
+  catch { throw new ApiError(400, 'Send a valid JSON request.'); }
 }
 
 export function verifyOrigin(request: Request) {
   const origin = request.headers.get('origin');
-  const expected = process.env.APP_ORIGIN || new URL(request.url).origin;
+  const target = new URL(request.url);
+  const host = request.headers.get('host') || target.host;
+  const expected = process.env.APP_ORIGIN || `${target.protocol}//${host}`;
   if (origin && origin !== expected) throw new ApiError(403, 'This request came from an unexpected origin.');
 }
 

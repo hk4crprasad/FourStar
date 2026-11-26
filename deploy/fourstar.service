@@ -1,0 +1,22 @@
+[Unit]
+Description=FourStar hospitality
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=hara
+Group=hara
+WorkingDirectory=/opt/fourstar/current
+Environment=NODE_ENV=production
+EnvironmentFile=/opt/fourstar/shared/fourstar.env
+ExecStart=/usr/local/bin/node node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port 3102
+Restart=on-failure
+RestartSec=4
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

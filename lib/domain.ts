@@ -1,12 +1,14 @@
-export const orderTypes = ['DINE_IN', 'TAKEAWAY', 'DELIVERY'] as const;
+export const isOrderId = (value: string) => /^(?:FS|TS)-[A-F0-9]{20}$/.test(value);
+
+export const orderTypes = ['DINE_IN', 'TAKEAWAY', 'DELIVERY', 'ROOM_SERVICE'] as const;
 export type OrderType = typeof orderTypes[number];
 
 export const statuses = ['PLACED', 'ACCEPTED', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY', 'COMPLETED', 'REJECTED'] as const;
 export type OrderStatus = typeof statuses[number];
 
 export const payments = ['CASH', 'CARD_DEMO', 'UPI_DEMO', 'RAZORPAY_TEST'] as const;
-export const paymentLabels = { CASH: 'Cash on collection or delivery (demo)', CARD_DEMO: 'Card (demo)', UPI_DEMO: 'UPI (demo)', RAZORPAY_TEST: 'Razorpay (Test Mode)' };
-export const typeLabels = { DELIVERY: 'Delivery', TAKEAWAY: 'Takeaway', DINE_IN: 'Dine-in' };
+export const paymentLabels = { CASH: 'Cash (demo)', CARD_DEMO: 'Card (demo)', UPI_DEMO: 'UPI (demo)', RAZORPAY_TEST: 'Razorpay (Test Mode)' };
+export const typeLabels = { DELIVERY: 'Delivery', TAKEAWAY: 'Takeaway', DINE_IN: 'Dine-in', ROOM_SERVICE: 'Room service' };
 export const statusLabels: Record<OrderStatus, string> = {
   PLACED: 'Order placed', ACCEPTED: 'Order accepted', PREPARING: 'Preparing', READY: 'Ready',
   OUT_FOR_DELIVERY: 'Out for delivery', COMPLETED: 'Completed', REJECTED: 'Order rejected',
@@ -31,7 +33,7 @@ export type TrackedOrder = {
 };
 export type AdminOrder = TrackedOrder & {
   customerName: string; customer: { mobile: string }; address: string | null; tableNumber: string | null;
-  instructions: string | null; payment: typeof payments[number]; subtotal: number; tax: number; delivery: number;
+  instructions: string | null; roomNumber: string | null; payment: typeof payments[number]; subtotal: number; tax: number; delivery: number;
   items: { id: string; name: string; quantity: number; options: string[]; unitPrice: number }[];
 };
 

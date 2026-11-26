@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { seedHotel } from './hotel-seed';
 import { db, restaurantId } from '../lib/db';
 import type { Option } from '../lib/domain';
 
@@ -42,8 +43,8 @@ async function seed() {
   await db.restaurant.upsert({
     where: { id: restaurantId }, update: {},
     create: {
-      id: restaurantId, name: 'Tamarind Social', tagline: 'INDIAN KITCHEN',
-      location: 'Indiranagar, Bengaluru', description: 'Tandoor favourites, slow-cooked curries and more from our Indian kitchen.',
+      id: restaurantId, name: 'FourStar', tagline: 'INDIAN KITCHEN',
+      location: 'Kataka, Odisha', description: 'Tandoor favourites, slow-cooked curries and more from our Indian kitchen.',
       opensAt: '00:00', closesAt: '00:00',
     },
   });
@@ -69,7 +70,8 @@ async function seed() {
       },
     });
   }));
-  console.log('Seeded Tamarind Social and 24 dishes.');
+  await seedHotel();
+  console.log('Seeded FourStar, 24 dishes and four room types.');
 }
 
 seed().catch(error => { console.error(error); process.exitCode = 1; }).finally(() => db.$disconnect());

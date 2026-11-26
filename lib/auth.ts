@@ -9,7 +9,7 @@ export function secretEqual(a: string, b: string) {
   return timingSafeEqual(createHash('sha256').update(a).digest(), createHash('sha256').update(b).digest());
 }
 
-function signature(payload: string) {
+export function signature(payload: string) {
   const secret = process.env.SESSION_SECRET;
   if (!secret || secret.length < 32) throw new Error('SESSION_SECRET must be at least 32 characters.');
   return createHmac('sha256', secret).update(payload).digest('base64url');
