@@ -1,0 +1,14 @@
+node_modules/
+.next/
+.env
+generated/
+next-env.d.ts
+*.tsbuildinfo
+playwright-report/
+test-results/
+.data/
+themes/tamarind/preview.html
+themes/tamarind/sheet*.html
+themes/tamarind/*.png
+themes/tamarind/*.pictures.json
+themes/tamarind/*.history.json

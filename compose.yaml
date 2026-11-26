@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: phirmy
+      POSTGRES_PASSWORD: phirmy
+      POSTGRES_DB: phirmy
+    ports:
+      - "127.0.0.1:54327:5432"
+    volumes:
+      - phirmy-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U phirmy"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+volumes:
+  phirmy-db:

@@ -1,0 +1,133 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum OrderType {
+  DINE_IN
+  TAKEAWAY
+  DELIVERY
+}
+
+enum OrderStatus {
+  PLACED
+  ACCEPTED
+  PREPARING
+  READY
+  OUT_FOR_DELIVERY
+  COMPLETED
+  REJECTED
+}
+
+enum PaymentMethod {
+  CASH
+  CARD_DEMO
+  UPI_DEMO
+  RAZORPAY_TEST
+}
+
+model Restaurant {
+  id           String     @id
+  name         String
+  tagline      String
+  logoUrl      String?
+  location     String
+  description  String
+  isOpen       Boolean    @default(true)
+  opensAt      String     @default("11:00")
+  closesAt     String     @default("23:00")
+  timeZone     String     @default("Asia/Kolkata")
+  taxBps       Int        @default(500)
+  deliveryFee  Int        @default(4900)
+  categories   Category[]
+  items        MenuItem[]
+  orders       Order[]
+}
+
+model Category {
+  id           String     @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  name         String
+  imageUrl     String?
+  position     Int        @default(0)
+  items        MenuItem[]
+
+  @@unique([restaurantId, name])
+}
+
+model MenuItem {
+  id           String     @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  categoryId   String
+  category     Category   @relation(fields: [categoryId], references: [id])
+  name         String
+  description  String
+  imageUrl     String
+  price        Int
+  vegetarian   Boolean
+  inStock      Boolean    @default(true)
+  popular      Boolean    @default(false)
+  recommended  Boolean    @default(false)
+  options      Json       @default("[]")
+  position     Int        @default(0)
+  orderItems   OrderItem[]
+
+  @@index([restaurantId, categoryId])
+}
+
+model Customer {
+  id        String  @id @default(cuid())
+  mobile    String  @unique
+  orders    Order[]
+}
+
+model Order {
+  id           String        @id
+  requestId    String        @unique
+  restaurantId String
+  restaurant   Restaurant    @relation(fields: [restaurantId], references: [id])
+  customerId   String
+  customer     Customer      @relation(fields: [customerId], references: [id])
+  customerName String
+  type         OrderType
+  tableNumber  String?
+  address      String?
+  instructions String?
+  payment      PaymentMethod
+  paymentVerified Boolean @default(true)
+  razorpayOrderId String? @unique
+  razorpayPaymentId String? @unique
+  status       OrderStatus   @default(PLACED)
+  events       Json
+  subtotal     Int
+  tax          Int
+  delivery     Int
+  total        Int
+  items        OrderItem[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([restaurantId, status, createdAt])
+  @@index([restaurantId, createdAt])
+}
+
+model OrderItem {
+  id          String    @id @default(cuid())
+  orderId     String
+  order       Order     @relation(fields: [orderId], references: [id])
+  menuItemId  String?
+  menuItem    MenuItem? @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
+  name        String
+  unitPrice   Int
+  quantity    Int
+  options     String[]
+
+  @@index([orderId])
+  @@index([menuItemId])
+}

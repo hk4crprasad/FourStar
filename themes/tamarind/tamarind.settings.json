@@ -1,0 +1,38 @@
+{
+  "name": "tamarind",
+  "like": "neutral",
+  "mode": "both",
+  "settings": [
+    {
+      "thing": "accent",
+      "value": "#84cc16",
+      "source": "dial"
+    },
+    {
+      "thing": "--color-background-body",
+      "value": "#101211",
+      "source": "token",
+      "mode": "dark"
+    },
+    {
+      "thing": "--color-background-surface",
+      "value": "#1c1f1d",
+      "source": "token",
+      "mode": "dark"
+    },
+    {
+      "thing": "--color-text-primary",
+      "value": "#f5f5f5",
+      "source": "token",
+      "mode": "dark"
+    },
+    {
+      "thing": "--color-text-secondary",
+      "value": "#9ca3af",
+      "source": "token",
+      "mode": "dark"
+    }
+  ],
+  "lifted": [],
+  "palette": "3c3fd8b7f84345c89a46e4a4e0401af95019aeabcb343cc40a3c88d21bb2223b"
+}
