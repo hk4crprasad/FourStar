@@ -43,15 +43,23 @@ export function POST(request: Request) {
     const claim = await tableClaim();
     if (!claim) throw new ApiError(403, 'Join your table before ordering.');
     if (input.action === 'order') return placeTableOrder(claim.sessionId, input.order, claim);
-    return db.$transaction(async tx => {
-      const session = await activeTable(claim, tx);
-      if (!session) throw new ApiError(403, 'This table visit has ended.');
-      const duplicate = await tx.serviceRequest.findFirst({ where: { sessionId: session.id, type: input.type, status: { not: 'RESOLVED' } } });
-      if (duplicate) return { ok: true };
-      const recent = await tx.serviceRequest.count({ where: { sessionId: session.id, createdAt: { gt: new Date(Date.now() - 60_000) } } });
-      if (recent >= 3) throw new ApiError(429, 'Please wait a minute before sending another request.');
-      await tx.serviceRequest.create({ data: { sessionId: session.id, type: input.type } });
-      return { ok: true };
-    }, { isolationLevel: 'Serializable' });
+    // A double-tap sends two identical requests; the loser fails serialisation, then sees the winner's row on retry.
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return await db.$transaction(async tx => {
+          const session = await activeTable(claim, tx);
+          if (!session) throw new ApiError(403, 'This table visit has ended.');
+          const duplicate = await tx.serviceRequest.findFirst({ where: { sessionId: session.id, type: input.type, status: { not: 'RESOLVED' } } });
+          if (duplicate) return { ok: true };
+          const recent = await tx.serviceRequest.count({ where: { sessionId: session.id, createdAt: { gt: new Date(Date.now() - 60_000) } } });
+          if (recent >= 3) throw new ApiError(429, 'Please wait a minute before sending another request.');
+          await tx.serviceRequest.create({ data: { sessionId: session.id, type: input.type } });
+          return { ok: true };
+        }, { isolationLevel: 'Serializable' });
+      } catch (error) {
+        if (attempt >= 3 || !(typeof error === 'object' && error && 'code' in error && error.code === 'P2034')) throw error;
+        await new Promise(resolve => setTimeout(resolve, 50 * (attempt + 1)));
+      }
+    }
   });
 }
